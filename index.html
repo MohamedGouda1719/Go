@@ -7,8 +7,8 @@
     <meta name="theme-color" content="#007bff">
     <title>Incubator Settings</title>
 
-    <!-- PWA Meta -->
-    <link rel="manifest" href="manifest.json">
+    <!-- PWA Meta (داخل HTML) -->
+    <link rel="manifest" href="/Go/main/manifest.json">
     <link rel="apple-touch-icon" href="/Go/main/icon.png">
 
     <!-- Styles -->
@@ -107,10 +107,10 @@
         <button class="btn-danger" id="resetButton">Reset to Factory</button>
     </div>
 
+    <!-- Service Worker Registration -->
     <script>
-        // تسجيل Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js')
+            navigator.serviceWorker.register('/Go/main/service-worker.js')
                 .then(reg => {
                     console.log('Service Worker registered!', reg);
                     alert('تم تسجيل Service Worker بنجاح!');
@@ -120,11 +120,11 @@
                     alert('فشل تسجيل Service Worker. تأكد من أن الموقع يعمل عبر HTTPS أو على localhost.');
                 });
         }
+    </script>
 
-        // استبدل بـ IP الخاص بالـ ESP32
+    <script>
         const apiUrl = "http://<ESP32_IP>";
 
-        // تحميل البيانات من ESP32
         async function fetchData() {
             try {
                 const response = await fetch(`${apiUrl}/get-data`);
@@ -142,7 +142,6 @@
             }
         }
 
-        // حفظ الإعدادات الجديدة
         async function updateSettings() {
             const settings = {
                 minTemp: document.getElementById("minTemp").value,
@@ -171,7 +170,6 @@
             }
         }
 
-        // إعادة ضبط المصنع
         async function resetFactory() {
             try {
                 const response = await fetch(`${apiUrl}/reset-factory`);
@@ -187,12 +185,10 @@
             }
         }
 
-        // روابط الأزرار
         document.getElementById("saveButton").addEventListener("click", updateSettings);
         document.getElementById("resetButton").addEventListener("click", resetFactory);
 
-        // تحميل البيانات عند فتح الصفحة
         window.onload = fetchData;
     </script>
 </body>
-    </html>
+                </html>
