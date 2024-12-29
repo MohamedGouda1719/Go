@@ -112,13 +112,18 @@
   
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js')
-      .then(reg => console.log('Service Worker registered!', reg))
-      .catch(err => console.log('Service Worker registration failed:', err));
-  }
-            </script>
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log('Service Worker registered!', reg)
+           alert("تم التسجيل")
+           )
 
-<script>
+        
+      .catch(alert("فشل التسجيل ")
+          err => console.log('Service Worker registration failed:', err));
+  }
+            
+
+
     const apiUrl = "http://<ESP32_IP>"; // استبدل بـ IP الخاص بالـ ESP32
 
 // تحميل البيانات من ESP32
