@@ -10,7 +10,7 @@
     <!-- PWA Meta -->
     <link rel="manifest" href="Go/main/manifest.json">
     <link rel="apple-touch-icon" href="icon.png">
-
+    <link rel="service-worker" href="Go/main/service-worker.js">
     <!-- Styles -->
     <style>
         body {
@@ -113,7 +113,7 @@
 <script>
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('Go/main/service-worker.js')
+  navigator.serviceWorker.register('service-worker')
     .then(reg => {
       console.log('Service Worker registered!', reg);
       alert("تم تسجيل Service Worker بنجاح!");
@@ -193,6 +193,211 @@ async function resetFactory() {
 // روابط الأزرار
 document.getElementById("saveButton").addEventListener("click", updateSettings);
 document.getElementById("resetButton").addEventListener("click", resetFactory);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Incubator Controller">
+    <meta name="theme-color" content="#007bff">
+    <title>Incubator Settings</title>
+
+    <!-- PWA Meta -->
+    <link rel="manifest" href="Go/main/manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="service-worker" href="Go/main/service-worker.js">
+    <!-- Styles -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #007bff;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn-danger:hover {
+            background-color: #a71d2a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Incubator Settings</h1>
+
+        <!-- Temperature Settings -->
+        <div class="form-group">
+            <label for="minTemp">Min Temperature (°C)</label>
+            <input type="number" id="minTemp" step="0.1">
+        </div>
+        <div class="form-group">
+            <label for="maxTemp">Max Temperature (°C)</label>
+            <input type="number" id="maxTemp" step="0.1">
+        </div>
+
+        <!-- Humidity Settings -->
+        <div class="form-group">
+            <label for="minHumidity">Min Humidity (%)</label>
+            <input type="number" id="minHumidity" step="0.1">
+        </div>
+        <div class="form-group">
+            <label for="maxHumidity">Max Humidity (%)</label>
+            <input type="number" id="maxHumidity" step="0.1">
+        </div>
+
+        <!-- WiFi Settings -->
+        <div class="form-group">
+            <label for="wifiSSID">WiFi SSID</label>
+            <input type="text" id="wifiSSID">
+        </div>
+        <div class="form-group">
+            <label for="wifiMode">WiFi Mode</label>
+            <select id="wifiMode">
+                <option value="Client">Client</option>
+                <option value="AP">Access Point</option>
+            </select>
+        </div>
+
+        <!-- Buttons -->
+        <button id="saveButton">Save Settings</button>
+        <button class="btn-danger" id="resetButton">Reset to Factory</button>
+    </div>
+
+    
+
+  
+<script>
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker')
+    .then(reg => {
+      console.log('Service Worker registered!', reg);
+      alert("تم تسجيل Service Worker بنجاح!");
+    })
+    .catch(err => {
+      console.error('Service Worker registration failed:', err);
+      alert("فشل تسجيل Service Worker. تأكد من أن الموقع يعمل عبر HTTPS أو على localhost.");
+    });
+}
+
+// استبدل بـ IP الخاص بالـ ESP32
+const apiUrl = "http://<ESP32_IP>";
+
+// تحميل البيانات من ESP32
+async function fetchData() {
+  try {
+    const response = await fetch(`${apiUrl}/get-data`);
+    const data = await response.json();
+
+    document.getElementById("minTemp").value = data.minTemp;
+    document.getElementById("maxTemp").value = data.maxTemp;
+    document.getElementById("minHumidity").value = data.minHumidity;
+    document.getElementById("maxHumidity").value = data.maxHumidity;
+    document.getElementById("wifiSSID").value = data.wifiSSID;
+    document.getElementById("wifiMode").value = data.wifiMode;
+  } catch (error) {
+    console.error("Error fetching data from ESP32:", error);
+    alert("حدث خطأ أثناء تحميل البيانات من ESP32.");
+  }
+}
+
+// حفظ الإعدادات الجديدة
+async function updateSettings() {
+  const settings = {
+    minTemp: document.getElementById("minTemp").value,
+    maxTemp: document.getElementById("maxTemp").value,
+    minHumidity: document.getElementById("minHumidity").value,
+    maxHumidity: document.getElementById("maxHumidity").value,
+    wifiSSID: document.getElementById("wifiSSID").value,
+    wifiMode: document.getElementById("wifiMode").value,
+  };
+
+  try {
+    const response = await fetch(`${apiUrl}/update-settings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(settings),
+    });
+
+    if (response.ok) {
+      alert("تم تحديث الإعدادات بنجاح!");
+    } else {
+      alert("فشل تحديث الإعدادات. تحقق من ESP32.");
+    }
+  } catch (error) {
+    console.error("Error updating settings:", error);
+    alert("حدث خطأ أثناء تحديث الإعدادات.");
+  }
+}
+
+// إعادة ضبط المصنع
+async function resetFactory() {
+  try {
+    const response = await fetch(`${apiUrl}/reset-factory`);
+    if (response.ok) {
+      alert("تم إعادة ضبط الإعدادات بنجاح!");
+      fetchData(); // إعادة تحميل الإعدادات بعد إعادة الضبط
+    } else {
+      alert("فشل إعادة ضبط الإعدادات.");
+    }
+  } catch (error) {
+    console.error("Error resetting factory settings:", error);
+    alert("حدث خطأ أثناء إعادة ضبط الإعدادات.");
+  }
+}
+
+// روابط الأزرار
+document.getElementById("saveButton").addEventListener("click", updateSettings);
+document.getElementById("resetButton").addEventListener("click", resetFactory);
+
+// تحميل البيانات عند فتح الصفحة
+window.onload = fetchData;
+</script>
+</body>
+</html>
+
+
+
+    
 
 // تحميل البيانات عند فتح الصفحة
 window.onload = fetchData;
