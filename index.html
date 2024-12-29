@@ -8,7 +8,7 @@
     <title>Incubator Settings</title>
 
     <!-- PWA Meta -->
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="/Go/main/icon.png">
 
     <!-- Styles -->
@@ -110,7 +110,7 @@
     <script>
         // تسجيل Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js')
+            navigator.serviceWorker.register('service-worker.js')
                 .then(reg => {
                     console.log('Service Worker registered!', reg);
                     alert('تم تسجيل Service Worker بنجاح!');
