@@ -97,7 +97,8 @@
             <h3 id="timer2Status">Timer 2: --</h3>
         </div>
 
-        <!-- Temperature Settings -->
+        <!-- Incubator Settings -->
+        <h2>Incubator Settings</h2>
         <div class="form-group">
             <label for="minTemp">Min Temperature (°C)</label>
             <input type="number" id="minTemp" step="0.1" placeholder="Minimum Temperature">
@@ -106,8 +107,6 @@
             <label for="maxTemp">Max Temperature (°C)</label>
             <input type="number" id="maxTemp" step="0.1" placeholder="Maximum Temperature">
         </div>
-
-        <!-- Humidity Settings -->
         <div class="form-group">
             <label for="minHumidity">Min Humidity (%)</label>
             <input type="number" id="minHumidity" step="0.1" placeholder="Minimum Humidity">
@@ -118,6 +117,7 @@
         </div>
 
         <!-- Timer Settings -->
+        <h2>Timer Settings</h2>
         <div class="form-group">
             <label for="timer1On">Timer 1 ON Duration (sec)</label>
             <input type="number" id="timer1On" step="1" placeholder="Enter ON duration for Timer 1">
@@ -136,6 +136,7 @@
         </div>
 
         <!-- WiFi Settings -->
+        <h2>WiFi Settings</h2>
         <div class="form-group">
             <label for="wifiSSID">WiFi SSID</label>
             <input type="text" id="wifiSSID" placeholder="Enter WiFi SSID">
@@ -179,7 +180,6 @@
         window.onload = fetchLiveData;
 
         // Save and Reset Functions to be added...
-//
     </script>
 </body>
-    </html>
+</html>
