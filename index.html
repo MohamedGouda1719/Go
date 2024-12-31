@@ -7,52 +7,65 @@
     <meta name="theme-color" content="#007bff">
     <title>Incubator Settings</title>
 
-    <!-- PWA Meta (داخل HTML) -->
+    <!-- PWA Meta -->
     <link rel="manifest" href="/Go/main/manifest.json">
     <link rel="apple-touch-icon" href="/Go/main/icon.png">
 
     <!-- Styles -->
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto', Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f9f9f9;
+            background-color: #f4f4f9;
+            color: #333;
         }
         .container {
-            max-width: 600px;
-            margin: 20px auto;
+            max-width: 700px;
+            margin: 30px auto;
             background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
+            overflow: hidden;
         }
         h1 {
             text-align: center;
             color: #007bff;
+            margin-bottom: 20px;
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: bold;
+            color: #555;
         }
         .form-group input, .form-group select {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ddd;
             border-radius: 5px;
+            font-size: 16px;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
         }
         button {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
+            font-size: 16px;
             background-color: #007bff;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            margin-top: 10px;
+            transition: background-color 0.3s;
         }
         button:hover {
             background-color: #0056b3;
@@ -63,6 +76,29 @@
         .btn-danger:hover {
             background-color: #a71d2a;
         }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+        .notification.error {
+            background: #dc3545;
+        }
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+            button {
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -72,27 +108,27 @@
         <!-- Temperature Settings -->
         <div class="form-group">
             <label for="minTemp">Min Temperature (°C)</label>
-            <input type="number" id="minTemp" step="0.1">
+            <input type="number" id="minTemp" step="0.1" placeholder="Enter minimum temperature">
         </div>
         <div class="form-group">
             <label for="maxTemp">Max Temperature (°C)</label>
-            <input type="number" id="maxTemp" step="0.1">
+            <input type="number" id="maxTemp" step="0.1" placeholder="Enter maximum temperature">
         </div>
 
         <!-- Humidity Settings -->
         <div class="form-group">
             <label for="minHumidity">Min Humidity (%)</label>
-            <input type="number" id="minHumidity" step="0.1">
+            <input type="number" id="minHumidity" step="0.1" placeholder="Enter minimum humidity">
         </div>
         <div class="form-group">
             <label for="maxHumidity">Max Humidity (%)</label>
-            <input type="number" id="maxHumidity" step="0.1">
+            <input type="number" id="maxHumidity" step="0.1" placeholder="Enter maximum humidity">
         </div>
 
         <!-- WiFi Settings -->
         <div class="form-group">
             <label for="wifiSSID">WiFi SSID</label>
-            <input type="text" id="wifiSSID">
+            <input type="text" id="wifiSSID" placeholder="Enter WiFi SSID">
         </div>
         <div class="form-group">
             <label for="wifiMode">WiFi Mode</label>
@@ -107,23 +143,25 @@
         <button class="btn-danger" id="resetButton">Reset to Factory</button>
     </div>
 
+    <div class="notification" id="notification"></div>
+
     <!-- Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/Go/main/service-worker.js')
-                .then(reg => {
-                    console.log('Service Worker registered!', reg);
-                    alert('تم تسجيل Service Worker بنجاح!');
-                })
-                .catch(err => {
-                    console.error('Service Worker registration failed:', err);
-                    alert('فشل تسجيل Service Worker. تأكد من أن الموقع يعمل عبر HTTPS أو على localhost.');
-                });
+                .then(reg => showNotification('Service Worker registered successfully!'))
+                .catch(err => showNotification('Service Worker registration failed!', 'error'));
         }
-    </script>
 
-    <script>
         const apiUrl = "http://<ESP32_IP>";
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type === 'error' ? 'error' : ''}`;
+            notification.style.display = 'block';
+            setTimeout(() => notification.style.display = 'none', 3000);
+        }
 
         async function fetchData() {
             try {
@@ -138,7 +176,7 @@
                 document.getElementById("wifiMode").value = data.wifiMode;
             } catch (error) {
                 console.error("Error fetching data from ESP32:", error);
-                alert("حدث خطأ أثناء تحميل البيانات من ESP32.");
+                showNotification('Error fetching data from ESP32.', 'error');
             }
         }
 
@@ -160,13 +198,13 @@
                 });
 
                 if (response.ok) {
-                    alert("تم تحديث الإعدادات بنجاح!");
+                    showNotification('Settings updated successfully!');
                 } else {
-                    alert("فشل تحديث الإعدادات. تحقق من ESP32.");
+                    showNotification('Failed to update settings.', 'error');
                 }
             } catch (error) {
                 console.error("Error updating settings:", error);
-                alert("حدث خطأ أثناء تحديث الإعدادات.");
+                showNotification('Error updating settings.', 'error');
             }
         }
 
@@ -174,14 +212,14 @@
             try {
                 const response = await fetch(`${apiUrl}/reset-factory`);
                 if (response.ok) {
-                    alert("تم إعادة ضبط الإعدادات بنجاح!");
-                    fetchData(); // إعادة تحميل الإعدادات بعد إعادة الضبط
+                    showNotification('Factory settings reset successfully!');
+                    fetchData();
                 } else {
-                    alert("فشل إعادة ضبط الإعدادات.");
+                    showNotification('Failed to reset factory settings.', 'error');
                 }
             } catch (error) {
                 console.error("Error resetting factory settings:", error);
-                alert("حدث خطأ أثناء إعادة ضبط الإعدادات.");
+                showNotification('Error resetting factory settings.', 'error');
             }
         }
 
