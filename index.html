@@ -14,7 +14,7 @@
     <!-- Styles -->
     <style>
         body {
-            font-family: 'Roboto', Arial, sans-serif;
+            font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
             background-color: #f4f4f9;
@@ -49,11 +49,6 @@
             border-radius: 5px;
             font-size: 16px;
         }
-        .form-group input:focus, .form-group select:focus {
-            border-color: #007bff;
-            outline: none;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-        }
         button {
             width: 100%;
             padding: 12px;
@@ -87,20 +82,6 @@
             margin: 10px 0;
             color: #007bff;
         }
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            display: none;
-        }
-        .notification.error {
-            background: #dc3545;
-        }
     </style>
 </head>
 <body>
@@ -114,6 +95,26 @@
             <h3 id="currentHumidity">Humidity: -- %</h3>
             <h3 id="timer1Status">Timer 1: --</h3>
             <h3 id="timer2Status">Timer 2: --</h3>
+        </div>
+
+        <!-- Temperature Settings -->
+        <div class="form-group">
+            <label for="minTemp">Min Temperature (°C)</label>
+            <input type="number" id="minTemp" step="0.1" placeholder="Minimum Temperature">
+        </div>
+        <div class="form-group">
+            <label for="maxTemp">Max Temperature (°C)</label>
+            <input type="number" id="maxTemp" step="0.1" placeholder="Maximum Temperature">
+        </div>
+
+        <!-- Humidity Settings -->
+        <div class="form-group">
+            <label for="minHumidity">Min Humidity (%)</label>
+            <input type="number" id="minHumidity" step="0.1" placeholder="Minimum Humidity">
+        </div>
+        <div class="form-group">
+            <label for="maxHumidity">Max Humidity (%)</label>
+            <input type="number" id="maxHumidity" step="0.1" placeholder="Maximum Humidity">
         </div>
 
         <!-- Timer Settings -->
@@ -143,26 +144,22 @@
             <label for="wifiPassword">WiFi Password</label>
             <input type="password" id="wifiPassword" placeholder="Enter WiFi Password">
         </div>
+        <div class="form-group">
+            <label for="wifiMode">WiFi Mode</label>
+            <select id="wifiMode">
+                <option value="Client">Client</option>
+                <option value="AP">Access Point</option>
+            </select>
+        </div>
 
         <!-- Buttons -->
         <button id="saveButton">Save Settings</button>
         <button class="btn-danger" id="resetButton">Reset to Factory</button>
     </div>
 
-    <div class="notification" id="notification"></div>
-
     <!-- JavaScript -->
     <script>
         const apiUrl = "http://<ESP32_IP>";
-
-        // Notification Function
-        function showNotification(message, type = 'success') {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.className = `notification ${type === 'error' ? 'error' : ''}`;
-            notification.style.display = 'block';
-            setTimeout(() => notification.style.display = 'none', 3000);
-        }
 
         // Fetch Live Data
         async function fetchLiveData() {
@@ -175,23 +172,14 @@
                 document.getElementById("timer2Status").textContent = `Timer 2: ${data.timer2 ? "Running" : "Stopped"}`;
             } catch (error) {
                 console.error("Error fetching live data:", error);
-                showNotification("Failed to fetch live data.", "error");
             }
         }
 
-        // Call fetchLiveData every 5 seconds
         setInterval(fetchLiveData, 5000);
-
-        // Fetch and Update Functions for New Settings Here...
-
         window.onload = fetchLiveData;
 
-        // Service Worker
-        if ("serviceWorker" in navigator) {
-            navigator.serviceWorker.register("/Go/main/service-worker.js")
-                .then(() => showNotification("PWA is enabled!"))
-                .catch(() => showNotification("PWA registration failed!", "error"));
-        }
+        // Save and Reset Functions to be added...
+
     </script>
 </body>
-</html>
+    </html>
