@@ -27,7 +27,6 @@
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
-            overflow: hidden;
         }
         h1 {
             text-align: center;
@@ -76,6 +75,18 @@
         .btn-danger:hover {
             background-color: #a71d2a;
         }
+        .live-data {
+            background: #f9f9f9;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .live-data h3 {
+            margin: 10px 0;
+            color: #007bff;
+        }
         .notification {
             position: fixed;
             top: 20px;
@@ -90,39 +101,37 @@
         .notification.error {
             background: #dc3545;
         }
-        @media (max-width: 600px) {
-            .container {
-                margin: 10px;
-                padding: 15px;
-            }
-            button {
-                font-size: 14px;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Incubator Settings</h1>
 
-        <!-- Temperature Settings -->
-        <div class="form-group">
-            <label for="minTemp">Min Temperature (°C)</label>
-            <input type="number" id="minTemp" step="0.1" placeholder="Enter minimum temperature">
-        </div>
-        <div class="form-group">
-            <label for="maxTemp">Max Temperature (°C)</label>
-            <input type="number" id="maxTemp" step="0.1" placeholder="Enter maximum temperature">
+        <!-- Live Data Section -->
+        <div class="live-data">
+            <h2>Live Sensor Data</h2>
+            <h3 id="currentTemp">Temperature: -- °C</h3>
+            <h3 id="currentHumidity">Humidity: -- %</h3>
+            <h3 id="timer1Status">Timer 1: --</h3>
+            <h3 id="timer2Status">Timer 2: --</h3>
         </div>
 
-        <!-- Humidity Settings -->
+        <!-- Timer Settings -->
         <div class="form-group">
-            <label for="minHumidity">Min Humidity (%)</label>
-            <input type="number" id="minHumidity" step="0.1" placeholder="Enter minimum humidity">
+            <label for="timer1On">Timer 1 ON Duration (sec)</label>
+            <input type="number" id="timer1On" step="1" placeholder="Enter ON duration for Timer 1">
         </div>
         <div class="form-group">
-            <label for="maxHumidity">Max Humidity (%)</label>
-            <input type="number" id="maxHumidity" step="0.1" placeholder="Enter maximum humidity">
+            <label for="timer1Off">Timer 1 OFF Duration (sec)</label>
+            <input type="number" id="timer1Off" step="1" placeholder="Enter OFF duration for Timer 1">
+        </div>
+        <div class="form-group">
+            <label for="timer2On">Timer 2 ON Duration (sec)</label>
+            <input type="number" id="timer2On" step="1" placeholder="Enter ON duration for Timer 2">
+        </div>
+        <div class="form-group">
+            <label for="timer2Off">Timer 2 OFF Duration (sec)</label>
+            <input type="number" id="timer2Off" step="1" placeholder="Enter OFF duration for Timer 2">
         </div>
 
         <!-- WiFi Settings -->
@@ -131,11 +140,8 @@
             <input type="text" id="wifiSSID" placeholder="Enter WiFi SSID">
         </div>
         <div class="form-group">
-            <label for="wifiMode">WiFi Mode</label>
-            <select id="wifiMode">
-                <option value="Client">Client</option>
-                <option value="AP">Access Point</option>
-            </select>
+            <label for="wifiPassword">WiFi Password</label>
+            <input type="password" id="wifiPassword" placeholder="Enter WiFi Password">
         </div>
 
         <!-- Buttons -->
@@ -145,16 +151,11 @@
 
     <div class="notification" id="notification"></div>
 
-    <!-- Service Worker Registration -->
+    <!-- JavaScript -->
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/Go/main/service-worker.js')
-                .then(reg => showNotification('Service Worker registered successfully!'))
-                .catch(err => showNotification('Service Worker registration failed!', 'error'));
-        }
-
         const apiUrl = "http://<ESP32_IP>";
 
+        // Notification Function
         function showNotification(message, type = 'success') {
             const notification = document.getElementById('notification');
             notification.textContent = message;
@@ -163,70 +164,34 @@
             setTimeout(() => notification.style.display = 'none', 3000);
         }
 
-        async function fetchData() {
+        // Fetch Live Data
+        async function fetchLiveData() {
             try {
-                const response = await fetch(`${apiUrl}/get-data`);
+                const response = await fetch(`${apiUrl}/live-data`);
                 const data = await response.json();
-
-                document.getElementById("minTemp").value = data.minTemp;
-                document.getElementById("maxTemp").value = data.maxTemp;
-                document.getElementById("minHumidity").value = data.minHumidity;
-                document.getElementById("maxHumidity").value = data.maxHumidity;
-                document.getElementById("wifiSSID").value = data.wifiSSID;
-                document.getElementById("wifiMode").value = data.wifiMode;
+                document.getElementById("currentTemp").textContent = `Temperature: ${data.temperature} °C`;
+                document.getElementById("currentHumidity").textContent = `Humidity: ${data.humidity} %`;
+                document.getElementById("timer1Status").textContent = `Timer 1: ${data.timer1 ? "Running" : "Stopped"}`;
+                document.getElementById("timer2Status").textContent = `Timer 2: ${data.timer2 ? "Running" : "Stopped"}`;
             } catch (error) {
-                console.error("Error fetching data from ESP32:", error);
-                showNotification('Error fetching data from ESP32.', 'error');
+                console.error("Error fetching live data:", error);
+                showNotification("Failed to fetch live data.", "error");
             }
         }
 
-        async function updateSettings() {
-            const settings = {
-                minTemp: document.getElementById("minTemp").value,
-                maxTemp: document.getElementById("maxTemp").value,
-                minHumidity: document.getElementById("minHumidity").value,
-                maxHumidity: document.getElementById("maxHumidity").value,
-                wifiSSID: document.getElementById("wifiSSID").value,
-                wifiMode: document.getElementById("wifiMode").value,
-            };
+        // Call fetchLiveData every 5 seconds
+        setInterval(fetchLiveData, 5000);
 
-            try {
-                const response = await fetch(`${apiUrl}/update-settings`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(settings),
-                });
+        // Fetch and Update Functions for New Settings Here...
 
-                if (response.ok) {
-                    showNotification('Settings updated successfully!');
-                } else {
-                    showNotification('Failed to update settings.', 'error');
-                }
-            } catch (error) {
-                console.error("Error updating settings:", error);
-                showNotification('Error updating settings.', 'error');
-            }
+        window.onload = fetchLiveData;
+
+        // Service Worker
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/Go/main/service-worker.js")
+                .then(() => showNotification("PWA is enabled!"))
+                .catch(() => showNotification("PWA registration failed!", "error"));
         }
-
-        async function resetFactory() {
-            try {
-                const response = await fetch(`${apiUrl}/reset-factory`);
-                if (response.ok) {
-                    showNotification('Factory settings reset successfully!');
-                    fetchData();
-                } else {
-                    showNotification('Failed to reset factory settings.', 'error');
-                }
-            } catch (error) {
-                console.error("Error resetting factory settings:", error);
-                showNotification('Error resetting factory settings.', 'error');
-            }
-        }
-
-        document.getElementById("saveButton").addEventListener("click", updateSettings);
-        document.getElementById("resetButton").addEventListener("click", resetFactory);
-
-        window.onload = fetchData;
     </script>
 </body>
-                </html>
+</html>
